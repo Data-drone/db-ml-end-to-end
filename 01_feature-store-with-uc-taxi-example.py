@@ -27,6 +27,12 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Configurations
+catalog = dbutils.widgets.text("catalog", "brian_ml") #'brian_ml'
+schema = dbutils.widgets.text("schema", "taxi_example") #'taxi_example'
+
+# COMMAND ----------
+
 # MAGIC %md ## Compute features
 
 # COMMAND ----------
@@ -177,24 +183,24 @@ display(dropoff_features)
 
 # MAGIC %sql 
 # MAGIC -- Create a new catalog with:
-# MAGIC CREATE CATALOG IF NOT EXISTS brian_ml;
-# MAGIC USE CATALOG brian_ml;
+# MAGIC CREATE CATALOG IF NOT EXISTS ${catalog};
+# MAGIC USE CATALOG ${catalog};
 # MAGIC
 # MAGIC -- Or reuse existing catalog:
 # MAGIC --USE CATALOG ml;
 # MAGIC
 # MAGIC -- Create a new schema
-# MAGIC CREATE SCHEMA IF NOT EXISTS taxi_example;
-# MAGIC USE SCHEMA taxi_example;
+# MAGIC CREATE SCHEMA IF NOT EXISTS ${schema};
+# MAGIC USE SCHEMA ${schema};
 
 # COMMAND ----------
 
 # to use lineage we will write it to a table first
-raw_data.write.mode("overwrite").saveAsTable('brian_ml.taxi_example.raw_data')
+raw_data.write.mode("overwrite").saveAsTable(f'{catalog}.{schema}.raw_data')
 
 # COMMAND ----------
 
-raw_data = spark.sql('SELECT * FROM brian_ml.taxi_example.raw_data')
+raw_data = spark.sql(f'SELECT * FROM {catalog}.{schema}.raw_data')
 
 # COMMAND ----------
 
@@ -208,13 +214,13 @@ raw_data = spark.sql('SELECT * FROM brian_ml.taxi_example.raw_data')
 
 # MAGIC %sql
 # MAGIC
-# MAGIC DROP TABLE brian_ml.taxi_example.trip_pickup_time_series_features;
-# MAGIC DROP TABLE brian_ml.taxi_example.trip_dropoff_time_series_features;
+# MAGIC DROP TABLE ${catalog}.${schema}.trip_pickup_time_series_features;
+# MAGIC DROP TABLE ${catalog}.${schema}.trip_dropoff_time_series_features;
 
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC CREATE TABLE IF NOT EXISTS brian_ml.taxi_example.trip_pickup_time_series_features(
+# MAGIC CREATE TABLE IF NOT EXISTS ${catalog}.${schema}.trip_pickup_time_series_features(
 # MAGIC   zip INT NOT NULL,
 # MAGIC   ts TIMESTAMP NOT NULL,
 # MAGIC   mean_fare_window_1h_pickup_zip FLOAT,
@@ -226,7 +232,7 @@ raw_data = spark.sql('SELECT * FROM brian_ml.taxi_example.raw_data')
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC CREATE TABLE IF NOT EXISTS brian_ml.taxi_example.trip_dropoff_time_series_features(
+# MAGIC CREATE TABLE IF NOT EXISTS ${catalog}.${schema}.trip_dropoff_time_series_features(
 # MAGIC   zip INT NOT NULL,
 # MAGIC   ts TIMESTAMP NOT NULL,
 # MAGIC   count_trips_window_30m_dropoff_zip INT,
@@ -259,24 +265,24 @@ fs = feature_store.FeatureStoreClient()
 
 # test
 
-pickup_features.write.saveAsTable('brian_ml.taxi_example.trip_pickup_time_series_features_test')
+pickup_features.write.saveAsTable(f'{catalog}.{schema}.trip_pickup_time_series_features_test')
 
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC ALTER TABLE brian_ml.taxi_example.trip_pickup_time_series_features_test ALTER COLUMN zip SET NOT NULL;
-# MAGIC ALTER TABLE brian_ml.taxi_example.trip_pickup_time_series_features_test ALTER COLUMN ts SET NOT NULL;
-# MAGIC ALTER TABLE brian_ml.taxi_example.trip_pickup_time_series_features_test ADD CONSTRAINT trip_pickup_time_series_features_pk_2 PRIMARY KEY (zip, ts TIMESERIES);
+# MAGIC ALTER TABLE ${catalog}.${schema}.trip_pickup_time_series_features_test ALTER COLUMN zip SET NOT NULL;
+# MAGIC ALTER TABLE ${catalog}.${schema}.trip_pickup_time_series_features_test ALTER COLUMN ts SET NOT NULL;
+# MAGIC ALTER TABLE ${catalog}.${schema}.trip_pickup_time_series_features_test ADD CONSTRAINT trip_pickup_time_series_features_pk_2 PRIMARY KEY (zip, ts TIMESERIES);
 
 # COMMAND ----------
 
 spark.conf.set("spark.sql.shuffle.partitions", "5")
 fs.write_table(
-    name="brian_ml.taxi_example.trip_pickup_time_series_features",
+    name=f"{catalog}.{schema}.trip_pickup_time_series_features",
     df=pickup_features
 )
 fs.write_table(
-    name="brian_ml.taxi_example.trip_dropoff_time_series_features",
+    name=f"{catalog}.{schema}.trip_dropoff_time_series_features",
     df=dropoff_features
 )
 
@@ -303,7 +309,7 @@ new_pickup_features = pickup_features_fn(
 )
 # Write the new pickup features DataFrame to the feature table
 fs.write_table(
-    name="brian_ml.taxi_example.trip_pickup_time_series_features",
+    name=f"{catalog}.{schema}.trip_pickup_time_series_features",
     df=new_pickup_features,
     mode="merge",
 )
@@ -317,7 +323,7 @@ new_dropoff_features = dropoff_features_fn(
 )
 # Write the new dropoff features DataFrame to the feature table
 fs.write_table(
-    name="brian_ml.taxi_example.trip_dropoff_time_series_features",
+    name=f"{catalog}.{schema}.trip_dropoff_time_series_features",
     df=new_dropoff_features,
     mode="merge",
 )
@@ -353,7 +359,7 @@ fs.write_table(
 # MAGIC   SUM(count_trips_window_30m_dropoff_zip) AS num_rides,
 # MAGIC   dropoff_is_weekend
 # MAGIC FROM
-# MAGIC   brian_ml.taxi_example.trip_dropoff_time_series_features
+# MAGIC   ${catalog}.${schema}.trip_dropoff_time_series_features
 # MAGIC WHERE
 # MAGIC   dropoff_is_weekend IS NOT NULL
 # MAGIC GROUP BY
@@ -426,8 +432,8 @@ def get_latest_model_version(model_name):
 from databricks.feature_store import FeatureLookup
 import mlflow
 
-pickup_features_table = "brian_ml.taxi_example.trip_pickup_time_series_features"
-dropoff_features_table = "brian_ml.taxi_example.trip_dropoff_time_series_features"
+pickup_features_table = f"{catalog}.{schema}.trip_pickup_time_series_features"
+dropoff_features_table = f"{catalog}.{schema}.trip_dropoff_time_series_features"
 
 pickup_feature_lookups = [
     FeatureLookup(
@@ -542,7 +548,7 @@ fs.log_model(
     artifact_path="model_packaged",
     flavor=mlflow.lightgbm,
     training_set=training_set,
-    registered_model_name="brian_ml.taxi_example.taxi_example_fare_time_series_packaged",
+    registered_model_name=f"{catalog}.{schema}.taxi_example_fare_time_series_packaged",
 )
 
 # COMMAND ----------

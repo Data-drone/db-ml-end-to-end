@@ -18,7 +18,7 @@ function_name =  dbutils.widgets.text("function_name", "taxi_fare_prediction")  
 
 # COMMAND ----------
 
-%run ./endpoint_utils
+%run .utils/endpoint_utils
 
 # COMMAND ----------
 

@@ -28,8 +28,11 @@
 # COMMAND ----------
 
 # DBTITLE 1,Configurations
-catalog = dbutils.widgets.text("catalog", "brian_ml") #'brian_ml'
-schema = dbutils.widgets.text("schema", "taxi_example") #'taxi_example'
+dbutils.widgets.text("catalog", "brian_ml") #'brian_ml'
+dbutils.widgets.text("schema", "taxi_example") #'taxi_example'
+
+catalog = dbutils.widgets.get("catalog") 
+schema = dbutils.widgets.get("schema")
 
 # COMMAND ----------
 
@@ -265,11 +268,12 @@ fs = feature_store.FeatureStoreClient()
 
 # test
 
-pickup_features.write.saveAsTable(f'{catalog}.{schema}.trip_pickup_time_series_features_test')
+pickup_features.write.mode("overwrite").saveAsTable(f'{catalog}.{schema}.trip_pickup_time_series_features_test')
 
 # COMMAND ----------
 
 # MAGIC %sql
+# MAGIC -- detect if it is a feature table already or not?
 # MAGIC ALTER TABLE ${catalog}.${schema}.trip_pickup_time_series_features_test ALTER COLUMN zip SET NOT NULL;
 # MAGIC ALTER TABLE ${catalog}.${schema}.trip_pickup_time_series_features_test ALTER COLUMN ts SET NOT NULL;
 # MAGIC ALTER TABLE ${catalog}.${schema}.trip_pickup_time_series_features_test ADD CONSTRAINT trip_pickup_time_series_features_pk_2 PRIMARY KEY (zip, ts TIMESERIES);

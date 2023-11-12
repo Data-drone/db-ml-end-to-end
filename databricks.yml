@@ -1,0 +1,21 @@
+bundle:
+  name: db-ml-end-to-end
+
+include:
+  - resources/*.yml
+
+targets:
+  dev:
+    mode: development
+    default: True
+    workspace:
+      host: https://e2-demo-west.cloud.databricks.com
+  
+  prod:
+    mode: production
+    workspace: 
+      host: https://e2-demo-west.cloud.databricks.com
+      root_path: /Shared/.bundle/prod/${bundle.name}
+
+    run_as:
+      user_name: brian.law@databricks.com

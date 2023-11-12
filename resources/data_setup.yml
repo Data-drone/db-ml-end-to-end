@@ -1,0 +1,21 @@
+resources:
+  jobs:
+    data_setup:
+      name: data_setup
+
+      tasks:
+        - task_key: notebook_task
+          existing_cluster_id: 0717-041406-rchgu149
+          notebook_task:
+            notebook_path: ../src/data_setup.ipynb
+            base_parameters:
+              environment: ${bundle.environment}
+      
+      jobs_clusters:
+        - job_cluster_key: job_cluster
+          new_cluster:
+            spark_version: 13.3.x-scala2.12
+            node_type_id: m5.xlarge
+            autoscale:
+                min_workers: 1
+                max_workers: 4

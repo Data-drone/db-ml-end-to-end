@@ -1,0 +1,41 @@
+# The name of the bundle. run `databricks bundle schema` to see the full bundle settings schema.
+bundle:
+  name: db-ml-end-to-end
+
+variables:
+  experiment_name:
+    description: Experiment name for the model training.
+    default: /Users/${workspace.current_user.userName}/${bundle.target}-db-ml-end-to-end-experiment
+  model_name:
+    description: Model name for the model training.
+    default: db-ml-end-to-end-model
+  model_catalog_name:
+    description: Model name for the model training.
+    default: nab_mlops_dev
+
+include:
+  # Resources folder contains ML artifact resources for the ml project that defines model and experiment
+  # And workflows resources for the ml project including model training -> validation -> deployment,
+  # feature engineerng,  batch inference, data monitoring, metric refresh, alerts and triggering retraining
+  - ./resources/*.yml
+
+# Deployment Target specific values for workspace
+targets:
+  dev:
+    default: true
+    workspace:
+      # TODO: add dev workspace URL
+      host: https://e2-demo-field-eng.cloud.databricks.com
+
+  staging:
+    workspace:
+      host: https://e2-demo-field-eng.cloud.databricks.com
+
+  prod:
+    workspace:
+      host: https://e2-demo-field-eng.cloud.databricks.com
+
+  test:
+    workspace:
+      host: https://e2-demo-field-eng.cloud.databricks.com
+

@@ -9,7 +9,7 @@ resources:
 
       tasks:
         - task_key: notebook_task
-          existing_cluster_id: 0717-041406-rchgu149
+          existing_cluster_id: 0115-034704-alj89d3k
           notebook_task:
             notebook_path: ../src/load_data.ipynb
             base_parameters:

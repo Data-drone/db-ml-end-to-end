@@ -5,7 +5,7 @@ resources:
 
       tasks:
         - task_key: notebook_task
-          existing_cluster_id: 0115-034704-alj89d3k
+          existing_cluster_id: 0405-134210-nmv0cgxq
           notebook_task:
             notebook_path: ../src/data_setup.ipynb
             base_parameters:

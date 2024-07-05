@@ -9,14 +9,14 @@ resources:
 
       tasks:
         - task_key: building_features
-          existing_cluster_id: 0115-034704-alj89d3k
+          existing_cluster_id: 0405-134210-nmv0cgxq
           notebook_task:
             notebook_path: ../src/build_features.ipynb
             base_parameters:
               environment: ${bundle.environment}
         
         - task_key: model_training
-          existing_cluster_id: 0115-034704-alj89d3k
+          existing_cluster_id: 0405-134210-nmv0cgxq
           notebook_task:
             notebook_path: ../src/train_model.ipynb
             base_parameters:

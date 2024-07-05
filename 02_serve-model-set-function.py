@@ -5,14 +5,18 @@
 
 # COMMAND ----------
 
+# MAGIC %pip install -U databricks-sdk
+
+# COMMAND ----------
+
+from databricks.sdk import WorkspaceClient
+
 # DBTITLE 1,Configurations
 dbutils.widgets.text("catalog", "brian_ml") #'brian_ml'
 dbutils.widgets.text("schema", "taxi_example") #'taxi_example'
 
 catalog = dbutils.widgets.get("catalog") #'brian_ml'
 schema = dbutils.widgets.get("schema") #'taxi_example'
-
-
 model_name = 'taxi_example_fare_time_series_packaged'
 
 workload_type = 'CPU'
@@ -22,10 +26,8 @@ endpoint_name = 'brian_ml_taxi_example_fare_time_series_packaged'
 dbutils.widgets.text("function_name", "taxi_fare_prediction")  #'taxi_fare_prediction'
 function_name = dbutils.widgets.get("function_name")
 
-
-# COMMAND ----------
-
-%run ./utils/model_serving
+workspace_url = spark.conf.get("spark.databricks.workspaceUrl")
+w = WorkspaceClient()
 
 # COMMAND ----------
 
@@ -74,19 +76,26 @@ fs.publish_table(f"{catalog}.{schema}.trip_dropoff_time_series_features",
 
 # COMMAND ----------
 
-latest_version = get_latest_model_version(f'{catalog}.{schema}.{model_name}')
+from databricks.sdk.service.serving import EndpointCoreConfigInput, ServedEntityInput, AutoCaptureConfigInput
 
-# COMMAND ----------
-
-serving_client = EndpointApiClient()
-
-# NOTE this can take 10 to 15 mins
-serving_client.create_endpoint_if_not_exists(endpoint_name, 
-                                            model_name=f"{catalog}.{schema}.{model_name}", 
-                                            model_version = latest_version, 
-                                            workload_size=workload_sizing,
-                                            workload_type=workload_type
-                                            )
+w.serving_endpoints.create_and_wait(
+    name = endpoint_name,
+    config = EndpointCoreConfigInput(
+        auto_capture_config = AutoCaptureConfigInput(
+            catalog_name=catalog,
+            schema_name=schema,
+            enabled=True,
+        ),
+        served_entities=[
+            ServedEntityInput(
+                entity_name = f'{catalog}.{schema}.{model_name}',
+                entity_version = '1',
+                workload_size = 'Small',
+                scale_to_zero_enabled = True
+            )
+        ]
+    )
+)
 
 # COMMAND ----------
 
@@ -109,10 +118,15 @@ dataset = {"dataframe_records": [
 import timeit
 import requests
 
-endpoint_url = f"{serving_client.base_url}/realtime-inference/{endpoint_name}/invocations"
+endpoint_url = f"https://{workspace_url}/realtime-inference/{endpoint_name}/invocations"
 print(f"Sending requests to {endpoint_url}")
 starting_time = timeit.default_timer()
-inferences = requests.post(endpoint_url, json=dataset, headers=serving_client.headers).json()
+
+# this is for notebook use only - create one for prop
+NOTEBOOK_TOKEN = dbutils.notebook.entry_point.getDbutils().notebook().getContext().apiToken().get()
+model_serving_headers = {'Authorization': f'Bearer {NOTEBOOK_TOKEN}',
+                         'Content-Type': 'application/json'}
+inferences = requests.post(endpoint_url, json=dataset, headers=model_serving_headers)
 print(f"Embedding inference, end 2 end :{round((timeit.default_timer() - starting_time)*1000)}ms {inferences}")
 
 # COMMAND ----------
@@ -137,7 +151,7 @@ SELECT ai_query(
     'count_trips_window_30m_dropoff_zip', 1,
     'dropoff_is_weekend', 1
    ),
-  'returnType', 'DOUBLE'
+  'DOUBLE'
 );
 
 # COMMAND ----------

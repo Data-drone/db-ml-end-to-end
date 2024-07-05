@@ -9,12 +9,12 @@ targets:
     mode: development
     default: True
     workspace:
-      host: https://e2-demo-west.cloud.databricks.com
+      host: https://e2-demo-field-eng.cloud.databricks.com
   
   prod:
     mode: production
     workspace: 
-      host: https://e2-demo-west.cloud.databricks.com
+      host: https://e2-demo-field-eng.cloud.databricks.com
       root_path: /Shared/.bundle/prod/${bundle.name}
 
     run_as:

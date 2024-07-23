@@ -11,7 +11,7 @@ resources:
             base_parameters:
               environment: ${bundle.environment}
       
-      jobs_clusters:
+      job_clusters:
         - job_cluster_key: job_cluster
           new_cluster:
             spark_version: 13.3.x-scala2.12

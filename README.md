@@ -16,6 +16,11 @@ Once they are configured then we can first off the bundles (assuming you have al
 - Make sure that your cli is up to date
 - make sure that your configurations are clean
 
+## Setup Auth
+
+<TODO>
+
+## Deploy and run bundles
 
 ```{bash}
 # check auth and token setup

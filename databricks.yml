@@ -1,5 +1,16 @@
 bundle:
   name: db-ml-end-to-end
+  
+variables:
+  existing_cluster_id:
+    description: Default Existing clsuter to use to save dev time
+    default: 0723-151416-om0ign7r
+  base_spark_version:
+    description: base spark version
+    default: 13.3.x-scala2.12
+  base_node_type:
+    description: basic job node type to use
+    default: Standard_D4ds_v5
 
 include:
   - resources/*.yml
@@ -9,12 +20,13 @@ targets:
     mode: development
     default: True
     workspace:
-      host: https://e2-demo-field-eng.cloud.databricks.com
+      host: https://adb-984752964297111.11.azuredatabricks.net/
+
   
   prod:
     mode: production
     workspace: 
-      host: https://e2-demo-field-eng.cloud.databricks.com
+      host: https://adb-984752964297111.11.azuredatabricks.net/
       root_path: /Shared/.bundle/prod/${bundle.name}
 
     run_as:

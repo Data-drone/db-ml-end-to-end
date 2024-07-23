@@ -5,7 +5,7 @@ resources:
 
       tasks:
         - task_key: notebook_task
-          existing_cluster_id: 0405-134210-nmv0cgxq
+          existing_cluster_id: ${var.existing_cluster_id}
           notebook_task:
             notebook_path: ../src/data_setup.ipynb
             base_parameters:
@@ -14,8 +14,8 @@ resources:
       job_clusters:
         - job_cluster_key: job_cluster
           new_cluster:
-            spark_version: 13.3.x-scala2.12
-            node_type_id: m5.xlarge
+            spark_version: ${var.base_spark_version}
+            node_type_id: ${var.base_node_type}
             autoscale:
                 min_workers: 1
                 max_workers: 4
